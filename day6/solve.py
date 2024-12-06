@@ -2,6 +2,8 @@ from pathlib import Path
 import numpy as np
 from itertools import cycle
 
+from tqdm import tqdm
+
 test_data = """\
 ....#.....
 .........#
@@ -37,7 +39,7 @@ def my_print(obstacles, guard_map, current_pos):
         for j in range(obstacles.shape[1]):
             if (i, j) == current_pos:
                 print("?", end="")
-            elif guard_map[i, j]:
+            elif guard_map[i, j].any():
                 print("+", end="")
             elif obstacles[i, j]:
                 print("#", end="")
@@ -46,33 +48,62 @@ def my_print(obstacles, guard_map, current_pos):
         print()
     print()
 
-def part1(start: tuple[int, int], obstacles: np.ndarray):
+def walk(start: tuple[int, int], obstacles: np.ndarray):
 
-    cycle_dirs = cycle(directions)
+    cycle_dirs = cycle(enumerate(directions))
 
     # Create map of positions of the guard
-    guard_map = np.zeros_like(obstacles, dtype=bool)
+    guard_map = np.zeros((*obstacles.shape, 4), dtype=bool)
 
     # Start direction is up
-    direction = next(cycle_dirs)
+    idir, direction = next(cycle_dirs)
     istep = 0
     i, j = start
+    loop = False
     while i >= 0 and i < obstacles.shape[0] and j >= 0 and j < obstacles.shape[1]:
         if obstacles[i, j]:
             # Backtrack one, turn right
             i, j = i - direction[0], j - direction[1]
-            direction = next(cycle_dirs)
+            idir, direction = next(cycle_dirs)
         else:
             istep += 1
-            guard_map[i, j] = True
+            if guard_map[i, j, idir]:
+                # We found a loop
+                loop = True
+                break
+
+            # Mark position
+            guard_map[i, j, idir] = True
+
             # Move forward
             i, j = i + direction[0], j + direction[1]
 
-            # print(f"=== Step {istep} ")
-            # my_print(obstacles, guard_map, (i, j))
+    return guard_map, loop
 
-    print(f"Part 1: {guard_map.sum()}")
+def part1(start: tuple[int, int], obstacles: np.ndarray):
+    guard_map, _ = walk(start, obstacles)
+    print(f"Part 1: {guard_map.max(axis=-1).sum()}")
+
+def part2(start: tuple[int, int], obstacles: np.ndarray):
+    Nloop = 0
+    for i in tqdm(range(obstacles.shape[0])):
+        for j in range(obstacles.shape[1]):
+            if obstacles[i, j]:
+                # There is already an obstacle, do nothing
+                continue
+            elif (i, j) == start:
+                # The guard starts here, do nothing
+                continue
+
+            # Otherwise, add a new (temporary) obstacle
+            new_obstacles = obstacles.copy()
+            new_obstacles[i, j] = True
+
+            _, loop = walk(start, new_obstacles)
+            Nloop += loop
+    print(f"part 2: {Nloop}")
 
 start, obstacles = parse(data)
 
 part1(start, obstacles)
+part2(start, obstacles)
