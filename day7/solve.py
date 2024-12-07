@@ -2,6 +2,8 @@ from itertools import product
 from operator import add, mul
 from pathlib import Path
 
+from tqdm import tqdm
+
 test_data = """\
 190: 10 19
 3267: 81 40 27
@@ -41,5 +43,28 @@ def part1(equations: dict[int, list[int]]):
 
     print(f"Part 1: {sum(k for k, v in ok.items() if v)}")
 
+def concat(a, b):
+    return int(str(a) + str(b))
+
+def part2(equations: dict[int, list[int]]):
+    ok: dict[int, bool] = {}
+
+    for key, values in tqdm(equations.items()):
+        ok[key] = False
+        tot = values[0]
+        for operations in product((mul, add, concat), repeat=len(values) - 1):
+            tot = values[0]
+            for op, val in zip(operations, values[1:]):
+                tot = op(tot, val)
+                if tot > key:
+                    break
+
+            if tot == key:
+                ok[key] = True
+                break
+
+    print(f"Part 2: {sum(k for k, v in ok.items() if v)}")
+
 equations = parse(data)
 part1(equations)
+part2(equations)
