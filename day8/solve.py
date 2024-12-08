@@ -42,5 +42,34 @@ def part1(antennas: np.ndarray):
 
     print(f"Part 1: {np.sum(antinodes)}")
 
+def part2(antennas: np.ndarray):
+    antinodes = np.zeros_like(antennas)
+    # Find unique antennas
+    ids = np.unique(antennas[antennas != -1])
+    for id in ids:
+        all_i, all_j = np.asarray(np.nonzero(antennas == id))
+        for ij1, ij2 in combinations(zip(all_i, all_j), r=2):
+            di = ij2[0] - ij1[0]
+            dj = ij2[1] - ij1[1]
+
+            ii = ij1[0]
+            jj = ij1[1]
+
+            while ii >= 0 and ii < antennas.shape[0] and jj >= 0 and jj < antennas.shape[1]:
+                antinodes[ii, jj] = 1
+                ii -= di
+                jj -= dj
+
+            ii = ij2[0]
+            jj = ij2[1]
+
+            while ii >= 0 and ii < antennas.shape[0] and jj >= 0 and jj < antennas.shape[1]:
+                antinodes[ii, jj] = 1
+                ii += di
+                jj += dj
+
+    print(f"Part 2: {np.sum(antinodes)}")
+
 antennas = parse(data)
 part1(antennas)
+part2(antennas)
