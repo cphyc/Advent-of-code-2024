@@ -1,6 +1,7 @@
 from itertools import product
 from pathlib import Path
 import networkx as nx
+from tqdm import tqdm
 
 test_data = """\
 89010123
@@ -50,7 +51,19 @@ def part1(graph: nx.DiGraph):
     print(f"Part 1: {score}")
 
 def part2(graph: nx.DiGraph):
-    ...
+    endpoints = [inode for inode in graph.nodes if graph.nodes[inode]["height"] == 9]
+    trailheads = [inode for inode in graph.nodes if graph.nodes[inode]["height"] == 0]
+
+    # Iterate over trailheads
+    score = 0
+    for trailhead in tqdm(trailheads):
+         for endpoint in tqdm(endpoints, leave=False):
+             for _ in nx.simple_paths.all_simple_paths(graph, trailhead, endpoint):
+                score += 1
+
+    print(f"Part 2: {score}")
 
 graph = parse(data)
+
 part1(graph)
+part2(graph)
