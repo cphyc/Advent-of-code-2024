@@ -41,21 +41,25 @@ def parse(data: str):
 
         yield A, B, prize
 
-def solve(A: Point, B: Point, prize: Point):
-    nA = max(min(prize.x // A.x, prize.y // A.y), 100)
-    nB = max(min(prize.x // B.x, prize.y // B.y), 100)
+def solve(A: Point, B: Point, P: Point, Nmax: int = 100):
+    # i A.x + j B.x = P.x  (1)
+    # i A.y + j B.y = P.y  (2)
+    # So, (1) * B.y - (2) * B.x = i * (A.x * B.y - A.y * B.x) = P.x * B.y - P.y * B.x
+    # and j = (P.y - A.y) * i / B.y
+    denom = A.x * B.y - A.y * B.x
+    if denom == 0:
+        raise ValueError("No solution")
+    if B.y == 0:
+        raise ValueError("No solution")
 
-    solutions = []
-    for i in range(nA + 1):
-        for j in range(nB + 1):
-            if i * A.x + j * B.x == prize.x and i * A.y + j * B.y == prize.y:
-                solutions.append((i, j))
+    i = (B.y * P.x - P.y * B.x) // denom
+    j = (P.y - A.y * i) // B.y
 
-    if solutions:
-        # Find the solution with the smallest number of steps
-        return min(solutions, key=sum)
+    if i * A.x + j * B.x == P.x and i * A.y + j * B.y == P.y:
+        return int(i), int(j)
     else:
-        return (-1, -1)
+        return -1, -1
+
 
 
 def part1(data):
@@ -66,10 +70,20 @@ def part1(data):
             # print(f"No solution for {A=}, {B=}, {prize=}")
             continue
         total += 3 * i + j
-        print(f"Button A: {i}, Button B: {j}, cost = {3 * i + j}")
 
     print(f"Part 1: {total}")
 
+def part2(data):
+    total = 0
+    for A, B, prize in data:
+        prize = Point(prize.x + 10000000000000, prize.y + 10000000000000)
+        i, j = solve(A, B, prize)
+        if i == -1:
+            # print(f"No solution for {A=}, {B=}, {prize=}")
+            continue
+        total += 3 * i + j
 
+    print(f"Part 2: {total}")
 
 part1(parse(data))
+part2(parse(data))
